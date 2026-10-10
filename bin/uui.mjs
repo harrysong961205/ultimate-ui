@@ -1,34 +1,62 @@
 #!/usr/bin/env node
 // ultimate-ui command line.
-//   uui init                         create ultimate-ui.config.json and a contract folder in the current project
+//   uui init                         set up the project (safe to re-run): config, folders, agent instructions, Claude Code plugin
+//        … --no-agents --no-claude   skip AGENTS.md/CLAUDE.md, skip .claude/settings.json
+//        … --here                    set up this folder on its own even if a parent folder has a config
+//   uui doctor                       show what is set up and what is missing
 //   uui literals [--files a b]       static design-token check (exit 1 on a new bypass) — put it in front of your build
 //   uui literals --update-baseline   shrink the debt list to what remains (never grows)
 //        … --allow-growth            write new violations into the list — a human decision, not the agent's
 //   uui contract [id ...]            validate screen contracts against their approved floor
+//   uui refs [id ...]                validate the reference records (docs/ui-references/*.json)
 //   uui review <dir> [--accept]      check a review run (evidence.json + review.json); --accept records the floor and source digest
 //   uui hook                         Claude Code PostToolUse hook (reads the hook JSON on stdin)
-import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadConfig, CONFIG_NAME, DEFAULTS } from '../lib/config.mjs';
+import { loadConfig, CONFIG_NAME } from '../lib/config.mjs';
 import { checkLiterals } from '../lib/literals.mjs';
-import { contractIds, loadContract, loadLedger, saveLedger, validateContract, floorOf, reviewProblems } from '../lib/contract.mjs';
+import { contractIds, loadContract, loadLedger, saveLedger, validateContract, floorOf, reviewProblems, referenceIds, loadReference, validateReference, referenceLinkProblems } from '../lib/contract.mjs';
+import { setup, doctor } from '../lib/setup.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
 const [cmd, ...args] = process.argv.slice(2);
 const need = () => { const c = loadConfig(); if (!c) { console.error(`No ${CONFIG_NAME} found. Run: npx uui init`); process.exit(2); } return c; };
 const flag = (n) => args.includes(n);
 const after = (n) => { if (!args.includes(n)) return null; const rest = args.slice(args.indexOf(n) + 1); const stop = rest.findIndex((a) => a.startsWith('--')); return stop < 0 ? rest : rest.slice(0, stop); };
 
 if (cmd === 'init') {
-  const path = resolve(CONFIG_NAME);
-  if (existsSync(path)) { console.log(`${CONFIG_NAME} already exists.`); process.exit(0); }
-  writeFileSync(path, JSON.stringify({ src: DEFAULTS.src, tokens: DEFAULTS.tokens, baseline: DEFAULTS.baseline, contracts: DEFAULTS.contracts }, null, 2) + '\n');
-  mkdirSync(resolve(DEFAULTS.contracts), { recursive: true });
-  const example = resolve(DEFAULTS.contracts, 'example.json.template');
-  if (!existsSync(example)) copyFileSync(resolve(here, '../templates/screen-contract.json'), example);
-  console.log(`Created ${CONFIG_NAME} and ${DEFAULTS.contracts}/. Edit the paths, then run: npx uui literals --update-baseline --allow-growth  (once, to freeze today's debt).`);
-  process.exit(0);
+  const r = setup(process.cwd(), { agents: !flag('--no-agents'), claude: !flag('--no-claude'), here: flag('--here') });
+  console.log(r.lines.join('\n'));
+  process.exit(r.ok ? 0 : 1);
+}
+
+if (cmd === 'doctor') {
+  const { lines, ok } = doctor(process.cwd());
+  console.log(lines.join('\n'));
+  process.exit(ok ? 0 : 1);
+}
+
+if (cmd === 'refs') {
+  const cfg = need();
+  const ids = args.filter((a) => !a.startsWith('--'));
+  let bad = 0;
+  const all = ids.length ? ids : referenceIds(cfg);
+  if (!all.length) console.log(`no references yet in ${cfg.references}/ — see skills/ultimate-ui/references/finding-references.md`);
+  for (const id of all) {
+    let problems;
+    try {
+      const ref = loadReference(cfg, id);
+      problems = ref ? validateReference(id, ref, cfg) : [`no file ${cfg.references}/${id}.json`];
+      // the same link check as `uui contract`, against every contract that cites this reference
+      if (ref) for (const cid of contractIds(cfg)) { try { const { contract } = loadContract(cfg, cid); if ((contract.references ?? []).includes(id)) problems.push(...referenceLinkProblems(ref, contract)); } catch { /* uui contract reports it */ } }
+    }
+    catch (e) { problems = [`not valid JSON: ${e.message}`]; }
+    console.log(problems.length ? `${id}: ${problems.length} problem(s)\n  ${problems.join('\n  ')}` : `${id}: ok`);
+    bad += problems.length;
+  }
+  process.exit(bad ? 1 : 0);
 }
 
 if (cmd === 'literals') {
@@ -69,12 +97,23 @@ if (cmd === 'review') {
 
 if (cmd === 'hook') {
   // PostToolUse: after Claude edits a screen file, run the token check on that file and hand failures back to the model.
-  let input = {};
-  try { input = JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { process.exit(0); }
+  let raw = '', input = {};
+  try { raw = readFileSync(0, 'utf8'); input = JSON.parse(raw || '{}'); } catch { process.exit(0); }
   if (!['Edit', 'Write', 'MultiEdit'].includes(input.tool_name)) process.exit(0);
   const file = resolve(input.cwd ?? process.cwd(), input.tool_input?.file_path ?? '');
   const cfg = loadConfig(dirname(file));
   if (!cfg || !file.startsWith(cfg.srcDir + '/') || !cfg.extensions.some((e) => file.endsWith(e)) || cfg.tokenFiles.includes(file)) process.exit(0); // project has not opted in
+  // The project pins its own ultimate-ui version: that copy judges, so the edit hook and the build gate agree.
+  // Resolved the way Node does from the project (so a monorepo's hoisted copy counts). A failing copy is reported, never skipped.
+  let pinned = null;
+  try { pinned = realpathSync(createRequire(resolve(cfg.root, 'package.json')).resolve('ultimate-ui/bin/uui.mjs')); } catch { /* not installed in the project */ }
+  if (pinned && !flag('--delegated') && pinned !== realpathSync(fileURLToPath(import.meta.url))) {
+    const r = spawnSync(process.execPath, [pinned, 'hook', '--delegated'], { input: raw, encoding: 'utf8', timeout: 30000 });
+    if (r.status === 0 && !r.error) { process.stdout.write(r.stdout ?? ''); process.exit(0); }
+    const why = r.error?.code === 'ETIMEDOUT' ? 'timed out after 30s' : `exited with ${r.status ?? r.signal}`;
+    process.stdout.write(JSON.stringify({ decision: 'block', reason: `The project's pinned ultimate-ui (${pinned}) could not check this edit: ${why}.\n${(r.stderr || '').trim().slice(0, 2000)}` }));
+    process.exit(0);
+  }
   let r;
   try { r = checkLiterals(cfg, { files: [file] }); } catch (e) { r = { code: 2, err: String(e?.message ?? e) }; }
   if (r.code !== 0) {
@@ -84,5 +123,5 @@ if (cmd === 'hook') {
   process.exit(0);
 }
 
-console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 9).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
+console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 13).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
 process.exit(cmd ? 2 : 0);

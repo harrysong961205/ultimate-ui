@@ -32,6 +32,7 @@ who · in what situation
 | `rules[]` `{id: Rn, kind, text, why, about[], failures[], evidenceStates[], checks?[]}` | Emphasis and presentation rules. kind: `order`, `distinct`, `state`, `reachable`, `visible`, `vocabulary`, `scale` | text, why, about, failures; evidenceStates ⊆ required states |
 | `rules[].checks[]` | Names of behaviour checks that prove the rule (`evidence.check(name, …)`) | must have passed for a `pass` verdict |
 | `evidence.required[]` `{state, viewport, shows}` | States (screenshot names) and real viewport sizes that must be captured | ≥1 |
+| `references[]` | Ids of adopted reference records in `docs/ui-references/` that the design leans on ([finding references](finding-references.md)) | optional; each exists and is `adopted` |
 | `sources[]` | Source files of this screen. If they change after the last accepted review, the screen needs review again | ≥1, files exist |
 | `knownGapRules[]` | Rules the current screen is known to break. Only these may be judged `known-gap` | real rules; growing needs changeLog |
 | `knownGaps[]` | Notes on where the screen breaks the contract | — |
@@ -61,7 +62,7 @@ Examples of good rules:
 
 - `npx uui contract [id]`:
   - The contract format.
-  - The approved **floor** from the ledger. Rules, the states each rule is judged on and required states cannot shrink, and allowed gaps cannot grow, unless a `changeLog` entry added since the last accepted review carries the user's decision and a reason. The meaning of each approved rule (text, why, kind, checks, and the label and source of the information it is about) is part of the floor too.
+  - The approved **floor** from the ledger. The questions (text and rank) are part of it: changing them needs a `changeLog` entry with the item `questions`. Rules, the states each rule is judged on and required states cannot shrink, and allowed gaps cannot grow, unless a `changeLog` entry added since the last accepted review carries the user's decision and a reason. The meaning of each approved rule (text, why, kind, checks, and the label and source of the information it is about) is part of the floor too.
 - `npx uui review <dir>`. A run is incomplete when any of these hold:
   - A required state × viewport was not captured on the contract's route.
   - A rule has no `pass` verdict with an observation and evidence, or is `known-gap` without being in `knownGapRules`.

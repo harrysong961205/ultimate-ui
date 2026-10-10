@@ -1,6 +1,6 @@
 {
   "name": "ultimate-ui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Screen contracts, design-token enforcement and screenshot review for AI-built UI.",
   "type": "module",
   "bin": { "uui": "bin/uui.mjs" },
@@ -10,9 +10,12 @@
     "./lib/literals.mjs": "./lib/literals.mjs",
     "./lib/render-audit.mjs": "./lib/render-audit.mjs",
     "./lib/contract.mjs": "./lib/contract.mjs",
-    "./lib/evidence.mjs": "./lib/evidence.mjs"
+    "./lib/evidence.mjs": "./lib/evidence.mjs",
+    "./lib/setup.mjs": "./lib/setup.mjs",
+    "./bin/uui.mjs": "./bin/uui.mjs",
+    "./package.json": "./package.json"
   },
-  "files": ["bin", "lib", "skills", "hooks", "templates", ".claude-plugin", "README.md", "README.ko.md", "LICENSE"],
+  "files": ["bin", "lib", "skills", "hooks", "templates", ".claude-plugin", "README.md", "README.ko.md", "CHANGELOG.md", "LICENSE"],
   "scripts": { "test": "node test/run.mjs" },
   "peerDependencies": { "postcss": ">=8", "typescript": ">=5" },
   "peerDependenciesMeta": { "typescript": { "optional": true } },

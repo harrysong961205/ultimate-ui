@@ -27,61 +27,71 @@ The skill also carries a **color guide** distilled from color-theory basics:
 
 See [color.md](skills/ultimate-ui/references/color.md).
 
+Before designing a new screen, the skill has the agent **look at how others solved the same decision** — searching by the user's question, not by "pretty dashboard" — and record what it saw, what it takes and what it avoids in `docs/ui-references/`. Patterns are translated into your tokens; nothing is copied. See [finding-references.md](skills/ultimate-ui/references/finding-references.md).
+
 ## Install
 
-### As a Claude Code plugin (skill + edit hook)
+Two pieces: the **plugin** once per person (Claude Code finds the skill everywhere), and the **checker** once per project (pinned, so the build, the edit hook and every agent use the same version).
+
+### 1. Once per person — Claude Code plugin
 
 ```
 /plugin marketplace add harrysong961205/ultimate-ui
 /plugin install ultimate-ui@ultimate-ui
 ```
 
-The skill loads for UI work. The edit hook does nothing until a project opts in with `ultimate-ui.config.json`.
+The skill loads for UI work in every project. The edit hook does nothing in a project until it has `ultimate-ui.config.json`. When the project has its own pinned copy in `node_modules`, the hook hands the check to that copy.
 
-### The checker in your project
-
-```bash
-npm i -D github:harrysong961205/ultimate-ui postcss typescript
-npx uui init      # creates ultimate-ui.config.json and docs/screen-contracts/
-```
-
-Edit the paths in `ultimate-ui.config.json`:
-
-```json
-{
-  "src": "src",
-  "tokens": ["src/tokens.css"],
-  "baseline": "design-baseline.json",
-  "contracts": "docs/screen-contracts"
-}
-```
-
-Freeze today's debt once. This is a human decision, the only time growth is allowed:
+### 2. Once per project — pinned checker + wiring
 
 ```bash
-npx uui literals --update-baseline --allow-growth
+npm i -D github:harrysong961205/ultimate-ui#v0.2.0 postcss typescript
+npx uui init
 ```
 
-Then gate your build:
+`uui init` is safe to re-run. It:
+- creates `ultimate-ui.config.json`, `docs/screen-contracts/` and `docs/ui-references/` (with templates);
+- adds one marked block to `AGENTS.md` and/or `CLAUDE.md` telling any agent when to use the skill, where the tokens are and which checks must pass — existing text is kept, and re-running only replaces that block (`--no-agents` to skip);
+- enables the plugin for the project in `.claude/settings.json`, so teammates opening it in Claude Code are offered it (`--no-claude` to skip).
 
-```json
-{ "scripts": { "build": "uui literals && vite build" } }
-```
+Then a human does the parts that are decisions:
+
+1. Point `src` and `tokens` in `ultimate-ui.config.json` at this project. Put the config at each product's own root. The search for it walks up from the edited file and stops at the repository root (a folder with `.git`), so a config above a nested repository never applies inside it. In a monorepo without nested repositories, a sub-project without its own config inherits the nearest one above — give each product its own config (`npx uui init --here` in that folder).
+2. Freeze today's debt once — the only time growth is allowed:
+   ```bash
+   npx uui literals --update-baseline --allow-growth
+   ```
+3. Gate the build:
+   ```json
+   { "scripts": { "build": "uui literals && vite build" } }
+   ```
+4. Check the setup:
+   ```bash
+   npx uui doctor
+   ```
+
+To upgrade, change the tag (`#v0.2.0` → the next one) in a branch, run `npm test`/your build and `npx uui init` again, and review the diff. Never let an upgrade grow the debt list or loosen a contract by itself.
 
 ### Other agents (Codex, Cursor, …)
 
-The rules are plain Markdown in [`skills/ultimate-ui/`](skills/ultimate-ui/). Point your agent instructions (`AGENTS.md` etc.) at `SKILL.md`. The build gate and `uui review` work the same, whoever wrote the code.
+`uui init` writes the instructions into `AGENTS.md`, which Codex and most agents read. The rules themselves are plain Markdown in [`skills/ultimate-ui/`](skills/ultimate-ui/). The build gate and `uui review` work the same, whoever wrote the code.
+
+### Projects that already have their own UI rules
+
+Keep the project's own guide as the source of truth for its brand, components and screens, and let it point to ultimate-ui for the general method. Do not run two token checkers on the same code: move to `uui literals` only after it gives the same findings as the existing check.
 
 ## Commands
 
 | Command | |
 |---|---|
-| `uui init` | create config and contract folder |
+| `uui init` | set up or update the project: config, folders, agent instructions, Claude Code plugin (safe to re-run) |
 | `uui literals` | static token check over `src` (exit 1 on a new bypass) |
 | `uui literals --files a.css b.tsx` | check only these files |
 | `uui literals --update-baseline` | shrink the debt list to what remains (never grows) |
 | `uui literals --update-baseline --allow-growth` | write new violations into the debt list — **human decision** |
+| `uui doctor` | show what is set up and what is missing |
 | `uui contract [id]` | validate screen contracts against their approved floor |
+| `uui refs [id]` | validate reference records in `docs/ui-references/` |
 | `uui review <dir> [--accept]` | check a review run; `--accept` records the floor and the source digest |
 
 ## Capturing evidence (Playwright)
@@ -116,6 +126,10 @@ A contract template is in [`templates/screen-contract.json`](templates/screen-co
 - Text contrast (WCAG 2 ratio) against stacked translucent backgrounds and ancestor opacity. It is an approximation from computed styles, not a pixel measurement.
 - Text it cannot measure — animations, background images, unknown color formats — is counted as *unverified*, not as passed.
 
+**References**
+- Each record says how closely it was looked at, what was observed, what is adopted and why, what is avoided and what may be reused.
+- A reference seen only in a search summary cannot be adopted. A contract may cite only adopted references.
+
 **Review**
 - Required states captured on the contract's route at the contract's viewport.
 - Every rule judged with the screenshots of the states it names.
@@ -128,6 +142,7 @@ A contract template is in [`templates/screen-contract.json`](templates/screen-co
 
 - It cannot tell whether the questions in a contract are the right ones, or whether something really draws the eye first. That stays human or agent judgment, on real screenshots.
 - It does not catch someone rewriting images, `evidence.json` and `review.json` together. Keep evidence in CI if that matters.
+- When the project pins its own copy, the edit hook trusts that copy's answer. A pinned copy that exits cleanly without checking is not detected — it is project code, like the build script.
 - The edit hook is a `PostToolUse` hook: the edit has already been written when it reports. It tells the agent to fix the bypass; it does not undo the edit. It only runs inside Claude Code. The build gate is what actually stops a bypass, for every editor.
 - Ratios like 60/30/10 are not enforced. They are thinking aids.
 
@@ -142,4 +157,4 @@ npm test     # the checkers must reject the failures they exist for
 
 Code and documentation: MIT.
 
-The color guide paraphrases and briefly quotes a third-party video (BLACKSWAN, YouTube) for commentary, with attribution. Those quotes and their translations belong to their author and are **not** covered by the MIT license.
+The color guide paraphrases a third-party video (BLACKSWAN, YouTube) for commentary, with attribution. It contains no verbatim quotes. The video's content belongs to its author and is **not** covered by the MIT license.

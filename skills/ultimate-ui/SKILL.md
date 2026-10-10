@@ -20,6 +20,8 @@ Write a short brief before editing:
 - **States:** loading, empty, error, partial, large data, narrow viewport. Name each and say how it differs.
 - **Pattern:** queue, searchable list, object detail, conversation or overview — and why. See [screen patterns](references/screen-patterns.md).
 
+For a new screen, or a question the project has no settled pattern for, **look at how others solved the same decision first**: [finding references](references/finding-references.md). Record what you saw and what you take in `docs/ui-references/`. Translate patterns into this project's tokens; never copy a design.
+
 For a new screen or an information-structure change, **persist the brief as a screen contract** (`docs/screen-contracts/<id>.json`, format in [screen contracts](references/screen-contracts.md)). Do not make one for small fixes. Record the user's words that set the purpose in `approval` (or, when the words are sensitive, a reference to where they are recorded). If the purpose is not in their words, ask that one question.
 
 ## 2. Build on tokens

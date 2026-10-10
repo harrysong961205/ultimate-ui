@@ -1,0 +1,18 @@
+{
+  "id": "example-approval-queue",
+  "kind": "web",
+  "url": "https://example.com/design-system/patterns/approval-queue",
+  "title": "Approval queue pattern — Example Design System",
+  "site": "Example Design System",
+  "checkedAt": "2026-01-01",
+  "seen": "opened",
+  "status": "adopted",
+  "problem": "Operators must find the few items blocked on them among hundreds of finished ones",
+  "observed": "The queue lists only items waiting on the viewer, each row names the decision and the blocking reason; finished items are behind a tab with a count.",
+  "adopt": [
+    { "pattern": "Rows name the decision needed, not just the status", "why": "Answers Q1 without opening the item", "questions": ["Q1"], "rules": ["R1"] }
+  ],
+  "avoid": ["Their brand colors and illustrations", "Their copy"],
+  "rights": "pattern only — no assets, copy or code taken",
+  "notes": ""
+}

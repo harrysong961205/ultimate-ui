@@ -1,17 +1,17 @@
 # Working with color — from color-theory basics to UI rules
 
-Source: BLACKSWAN (블랙스완), "A color-theory roadmap for when you first study color" (색을 처음 공부할 때 필요한 색채학 로드맵), YouTube, 2026-10-04, 17:39. https://www.youtube.com/watch?v=j1wt9T-ZZig — the quotes below are short paraphrases translated from the Korean auto-captions, not verbatim transcripts; check the video for the exact wording. They belong to the video's author and are not covered by this repository's MIT license. Korean version: [color.ko.md](color.ko.md).
+Source: BLACKSWAN (블랙스완), "A color-theory roadmap for when you first study color" (색을 처음 공부할 때 필요한 색채학 로드맵), YouTube, 2026-10-04, 17:39. https://www.youtube.com/watch?v=j1wt9T-ZZig — the video sections below paraphrase the Korean auto-captions in our own words; none is a verbatim quote; check the video for the exact wording. The video's content belongs to its author and is not covered by this repository's MIT license. Korean version: [color.ko.md](color.ko.md).
 
 The video is a reading roadmap of color-theory books. It does not state UI rules. Each section below has two layers:
 
-- **The video says**: paraphrased quotes with timestamps.
+- **The video, paraphrased**: our wording of what the video says, with timestamps. Nothing here is a verbatim quote.
 - **For UI**: ultimate-ui's interpretation. It is not the video's claim.
 
 ## 1. Color is seen in relation — never pick it in isolation
 
-- **The video says** [02:22–02:55]
-  - "We never see a color as it is. We always perceive it through the surrounding colors and context. The same color looks different when the environment changes."
-  - "Someone who uses color must think about how the result will trick the viewer's eye." The core idea is simultaneous contrast.
+- **The video, paraphrased** [02:22–02:55]
+  - We never see a color as it is. We always perceive it through the surrounding colors and context. The same color looks different when the environment changes.
+  - Someone who uses color must think about how the result will trick the viewer's eye. The core idea is simultaneous contrast.
 - **For UI**
   - Judge a color on the **real background and neighbours it sits on**, not on a swatch sheet. The same token reads differently on a dark surface, a selected row and a warning box.
   - Measure contrast on the final composited colors. `lib/render-audit.mjs` does this on rendered pages.
@@ -19,7 +19,7 @@ The video is a reading roadmap of color-theory books. It does not state UI rules
 
 ## 2. Plan color in its three attributes
 
-- **The video says** [03:31–03:46]: "Hue, saturation and lightness — the three attributes — are the first step to structuring and planning color." From there it extends to tone and nuance.
+- **The video, paraphrased** [03:31–03:46]: Hue, saturation and lightness — the three attributes — are the first step to structuring and planning color. From there it extends to tone and nuance.
 - **For UI**
   - Split roles **lightness → chroma → hue**, in that order.
     - Lightness builds the hierarchy of surfaces and text.
@@ -29,7 +29,7 @@ The video is a reading roadmap of color-theory books. It does not state UI rules
 
 ## 3. Contrast is decided by kind, position and area
 
-- **The video says** [03:56–04:04]: "Color contrast is how a color looks different depending on its kind, position and area. Arranged well, it becomes harmony."
+- **The video, paraphrased** [03:56–04:04]: Color contrast is how a color looks different depending on its kind, position and area. Arranged well, it becomes harmony.
 - **For UI**
   - Accents go on **small areas**: the primary action, the current selection, meaningful state.
   - A saturated color across a large area beats everything else, so nothing stands out anymore.
@@ -37,9 +37,9 @@ The video is a reading roadmap of color-theory books. It does not state UI rules
 
 ## 4. Good color comes from planning and order
 
-- **The video says**
-  - [04:09–04:15] "Good color is made from planning and order. Even colors that look spontaneous and irregular must play inside an order to be accepted."
-  - [09:22–09:31] "If every decision to choose and place a color is accidental, it can never leave a lasting impression."
+- **The video, paraphrased**
+  - [04:09–04:15] Good color is made from planning and order. Even colors that look spontaneous and irregular must play inside an order to be accepted.
+  - [09:22–09:31] If every decision to choose and place a color is accidental, it can never leave a lasting impression.
 - **For UI**
   - Do not pick colors per screen. Take them only from **role tokens**.
   - When a new color seems needed, first write down which role is missing. `uui literals` and the edit hook enforce this.
@@ -47,7 +47,7 @@ The video is a reading roadmap of color-theory books. It does not state UI rules
 
 ## 5. Value distribution first, then dominant and supporting proportions
 
-- **The video says** [07:43–07:57]: "The moment a scene appears you should see its color split. Only after the value distribution, then the proportion of dominant and supporting colors, can you move to the next step."
+- **The video, paraphrased** [07:43–07:57]: The moment a scene appears you should see its color split. Only after the value distribution, then the proportion of dominant and supporting colors, can you move to the next step.
 - **For UI**
   - In review, **look in grayscale first**. Check that the hierarchy (title, body, supporting, disabled) reads from lightness alone.
   - Then look at area: large neutral surfaces, medium supporting areas, small accents.
@@ -56,9 +56,9 @@ The video is a reading roadmap of color-theory books. It does not state UI rules
 
 ## 6. Limiting color makes it stronger
 
-- **The video says**
-  - [10:48–10:52] "The more you limit color, the stronger it can become."
-  - [04:44–04:50] "A minimal color combination makes an image that carries emotion more clearly."
+- **The video, paraphrased**
+  - [10:48–10:52] The more you limit color, the stronger it can become.
+  - [04:44–04:50] A minimal color combination makes an image that carries emotion more clearly.
 - **For UI**
   - Keep few accent hues on screen at once.
   - Do not paint every state. Give color to states a person must act on (needs review, error, unverified). Leave done and archived neutral.
@@ -66,7 +66,7 @@ The video is a reading roadmap of color-theory books. It does not state UI rules
 
 ## 7. Colors carry context and meaning
 
-- **The video says** [06:35–07:02]: "Color has been used symbolically in every moment of human history. Once you know what injecting a color's context into an image feels like, the colors you use become persuasive."
+- **The video, paraphrased** [06:35–07:02]: Color has been used symbolically in every moment of human history. Once you know what injecting a color's context into an image feels like, the colors you use become persuasive.
 - **For UI**
   - In one product, a color has **one meaning**. For example: red = error or danger, green = done or deployed, amber = needs checking, blue = primary action or selection.
   - Do not reuse a color for a second meaning. Decorative red reads as an error.
@@ -74,7 +74,7 @@ The video is a reading roadmap of color-theory books. It does not state UI rules
 
 ## 8. Write color as a system and measure it
 
-- **The video says** [05:17–05:28]: "A color system is a way to notate and manage color more precisely and efficiently." Set up the frame of objective notation and measurement first.
+- **The video, paraphrased** [05:17–05:28]: A color system is a way to notate and manage color more precisely and efficiently. Set up the frame of objective notation and measurement first.
 - **For UI**
   - Record and check colors by **token name and measured value** (contrast ratio, composited color), not by impression.
   - Turn requests like "a bit darker" into a step change in the token.

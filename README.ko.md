@@ -27,49 +27,60 @@ Ultimate UI는 세 곳에서 이를 막는다.
 
 자세한 내용은 [color.ko.md](skills/ultimate-ui/references/color.ko.md)를 본다.
 
+새 화면을 설계하기 전에는 에이전트가 **같은 결정을 다른 곳은 어떻게 풀었는지 찾아본다.** 「예쁜 대시보드」가 아니라 사용자의 질문으로 검색하고, 본 것·가져올 것·가져오지 않을 것을 `docs/ui-references/`에 기록한다. 패턴은 우리 토큰으로 옮기고 복사하지 않는다. [finding-references.md](skills/ultimate-ui/references/finding-references.md) 참고.
+
 ## 설치
 
-### Claude Code 플러그인 (스킬 + 편집 훅)
+두 가지를 설치한다. **플러그인**은 사람마다 한 번(Claude Code가 모든 프로젝트에서 스킬을 찾는다), **검사기**는 프로젝트마다 한 번이다. 검사기 버전을 고정해서 빌드·편집 훅·모든 에이전트가 같은 버전을 쓰게 한다.
+
+### 1. 사람마다 한 번 — Claude Code 플러그인
 
 ```
 /plugin marketplace add harrysong961205/ultimate-ui
 /plugin install ultimate-ui@ultimate-ui
 ```
 
-스킬은 UI 작업에서 읽힌다. 편집 훅은 프로젝트에 `ultimate-ui.config.json`이 있을 때만 동작한다.
+스킬은 모든 프로젝트의 UI 작업에서 읽힌다. 편집 훅은 `ultimate-ui.config.json`이 있는 프로젝트에서만 동작한다. 프로젝트 `node_modules`에 고정된 사본이 있으면 훅은 그 사본에 검사를 넘긴다.
 
-### 프로젝트에 검사기 넣기
+### 2. 프로젝트마다 한 번 — 버전 고정 + 연결
 
 ```bash
-npm i -D github:harrysong961205/ultimate-ui postcss typescript
+npm i -D github:harrysong961205/ultimate-ui#v0.2.0 postcss typescript
 npx uui init
 ```
 
-지금 있는 위반을 한 번 고정한다. 목록을 늘리는 일은 사람이 결정하고, 이때 한 번만 한다.
+`uui init`은 여러 번 돌려도 된다. 하는 일:
+- `ultimate-ui.config.json`, `docs/screen-contracts/`, `docs/ui-references/`(템플릿 포함)를 만든다.
+- `AGENTS.md`·`CLAUDE.md`에 표시된 블록 하나를 넣는다. 언제 스킬을 쓰고, 토큰이 어디 있고, 어떤 검사를 통과해야 하는지 적는다. 기존 내용은 그대로 두고, 다시 돌리면 그 블록만 바꾼다(`--no-agents`로 생략).
+- `.claude/settings.json`에서 이 프로젝트의 플러그인을 켠다. 동료가 Claude Code로 열면 설치를 안내받는다(`--no-claude`로 생략).
 
-```bash
-npx uui literals --update-baseline --allow-growth
-```
+그다음 판단이 필요한 일은 사람이 한다.
+1. `ultimate-ui.config.json`의 `src`·`tokens`를 이 프로젝트에 맞춘다. 설정은 제품마다 자기 루트에 둔다. 설정 탐색은 고친 파일에서 위로 올라가다 저장소 루트(`.git`이 있는 폴더)에서 멈춘다. 그래서 중첩된 저장소 안에는 그 바깥 설정이 적용되지 않는다. 중첩 저장소가 없는 모노레포에서는 자기 설정이 없는 하위 프로젝트가 가장 가까운 상위 설정을 물려받는다. 제품마다 설정을 두려면 그 폴더에서 `npx uui init --here`를 실행한다.
+2. 지금 있는 위반을 한 번 고정한다. 목록이 늘어나는 유일한 때다: `npx uui literals --update-baseline --allow-growth`
+3. 빌드 앞에 건다: `{ "scripts": { "build": "uui literals && vite build" } }`
+4. 점검한다: `npx uui doctor`
 
-그다음 빌드 앞에 건다.
-
-```json
-{ "scripts": { "build": "uui literals && vite build" } }
-```
+업그레이드는 브랜치에서 태그(`#v0.2.0`)를 바꾸고, 테스트·빌드와 `npx uui init`을 다시 돌린 뒤 diff를 본다. 업그레이드가 부채 목록을 늘리거나 계약을 느슨하게 하게 두지 않는다.
 
 ### 다른 에이전트 (Codex, Cursor 등)
 
-규칙은 [`skills/ultimate-ui/`](skills/ultimate-ui/)에 있는 Markdown 파일이다. `AGENTS.md` 같은 지침 파일에서 `SKILL.md`를 가리키게 한다. 빌드 관문과 `uui review`는 누가 코드를 고쳤든 똑같이 동작한다.
+`uui init`이 `AGENTS.md`에 지침을 넣는다. Codex와 대부분의 에이전트가 이 파일을 읽는다. 규칙은 [`skills/ultimate-ui/`](skills/ultimate-ui/)의 Markdown이다. 빌드 관문과 `uui review`는 누가 코드를 고쳤든 똑같이 동작한다.
+
+### 이미 자체 UI 규칙이 있는 프로젝트
+
+브랜드·컴포넌트·화면은 프로젝트 가이드를 정본으로 두고, 일반 방법은 ultimate-ui를 가리키게 한다. 같은 코드에 토큰 검사기 둘을 돌리지 않는다. 기존 검사와 같은 결과가 나오는 것을 확인한 뒤에만 `uui literals`로 옮긴다.
 
 ## 명령
 
 | 명령 | |
 |---|---|
-| `uui init` | 설정 파일과 계약 폴더를 만든다 |
+| `uui init` | 프로젝트를 설정·갱신한다: 설정, 폴더, 에이전트 지침, Claude Code 플러그인(여러 번 돌려도 된다) |
+| `uui doctor` | 무엇이 설정됐고 무엇이 빠졌는지 보여 준다 |
 | `uui literals` | 토큰 우회 정적 검사. 새 위반이면 종료 코드 1 |
 | `uui literals --update-baseline` | 부채 목록을 남은 만큼으로 줄인다. 늘리지는 않는다 |
 | `… --allow-growth` | 새 위반을 목록에 넣는다. **사람이 결정할 일**이다 |
 | `uui contract [id]` | 화면 계약 형식과 하한선을 검사한다 |
+| `uui refs [id]` | `docs/ui-references/`의 참고 기록을 검사한다 |
 | `uui review <dir> [--accept]` | 검수 실행을 검사한다. `--accept`는 하한선과 소스 해시를 원장에 남긴다 |
 
 ## 하지 못하는 것
@@ -83,4 +94,4 @@ npx uui literals --update-baseline --allow-growth
 
 코드와 문서: MIT.
 
-색 가이드는 제3자 영상(블랙스완, YouTube)을 출처와 함께 요약하고 짧게 인용한다. 이 인용과 번역은 원저작자의 것이며 MIT 라이선스에 포함되지 않는다.
+색 가이드는 제3자 영상(블랙스완, YouTube)을 출처와 함께 요약·의역한다. 원문 그대로의 인용은 없다. 영상의 내용은 원저작자의 것이며 MIT 라이선스에 포함되지 않는다.
