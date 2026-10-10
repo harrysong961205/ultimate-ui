@@ -1,0 +1,10 @@
+{
+  "name": "ultimate-ui",
+  "version": "0.1.0",
+  "description": "Make AI agents ship UI that holds up: plan the screen as a contract, enforce design tokens on every edit, and review real screenshots against the plan.",
+  "author": { "name": "harrysong961205" },
+  "homepage": "https://github.com/harrysong961205/ultimate-ui",
+  "repository": "https://github.com/harrysong961205/ultimate-ui",
+  "license": "MIT",
+  "keywords": ["ui", "design-system", "design-tokens", "ux-review", "screen-contract", "color"]
+}

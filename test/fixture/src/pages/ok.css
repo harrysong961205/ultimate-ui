@@ -1,0 +1,2 @@
+.row { padding: var(--s2) var(--s4); border-radius: var(--r1); color: var(--fg); margin: 0 auto; }
+/* padding: 13px — comments are not declarations */

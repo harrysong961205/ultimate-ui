@@ -1,0 +1,68 @@
+{
+  "id": "orders",
+  "route": "/orders",
+  "title": "Orders — what needs my decision today",
+  "status": "draft",
+  "approval": "2026-01-01 product owner: \"I open this every morning to see which orders need me before anything else.\"",
+  "audience": {
+    "who": "Operations manager",
+    "situation": ["Start of the day: find orders that are blocked on a human decision", "A customer calls about one order"],
+    "notFor": ["Customers — internal notes and unverified guesses are shown as they are"]
+  },
+  "questions": [
+    { "id": "Q1", "rank": 1, "text": "Which orders are waiting on my decision, and what decision?" },
+    { "id": "Q2", "rank": 2, "text": "What constraint or unknown changes that decision (amount, tax, scope)?" },
+    { "id": "Q3", "rank": 3, "text": "Where is a specific order and what happened to it?" }
+  ],
+  "nextActions": ["Approve or reject a waiting order", "Open the original request", "Search an order by number or customer"],
+  "success": [
+    "The first screen shows the waiting orders with the decision each needs",
+    "A failed load, an empty list and a truncated list are told apart"
+  ],
+  "information": [
+    { "id": "waiting", "label": "Orders waiting on me", "answers": ["Q1"], "source": "GET /api/orders?state=waiting", "disclosure": "initial" },
+    { "id": "constraints", "label": "Amount, tax and scope unknowns beside each decision", "answers": ["Q2"], "source": "order.unknowns", "axes": { "certainty": ["confirmed", "unverified"] }, "disclosure": "initial" },
+    { "id": "search", "label": "All orders, searchable", "answers": ["Q3"], "source": "GET /api/orders?q=", "disclosure": "secondary" },
+    { "id": "original", "label": "Original request and history", "answers": ["Q2", "Q3"], "source": "GET /api/orders/:id", "disclosure": "detail" }
+  ],
+  "rules": [
+    {
+      "id": "R1", "kind": "order",
+      "text": "Waiting orders come before the full order list",
+      "why": "Q1 is why this screen is opened",
+      "about": ["waiting", "search"],
+      "failures": ["Completed orders fill the first screen and the two waiting ones are below the fold"],
+      "evidenceStates": ["orders-1440"],
+      "checks": ["waiting orders are listed before all orders"]
+    },
+    {
+      "id": "R2", "kind": "visible",
+      "text": "Unknown amount, tax or scope is shown beside the approve action, in words, never only in a tooltip",
+      "why": "Approving without seeing the unknown is the costly mistake",
+      "about": ["constraints"],
+      "failures": ["\"120 or 1,200 (unit unknown)\" summarised into one amount"],
+      "evidenceStates": ["orders-1440", "orders-390"]
+    },
+    {
+      "id": "R3", "kind": "state",
+      "text": "A failed load says failed with a retry; it never shows \"no orders\"",
+      "why": "An empty-looking failure makes the manager believe nothing is waiting",
+      "about": ["waiting"],
+      "failures": [],
+      "evidenceStates": ["orders-error-1440", "orders-empty-1440"],
+      "checks": ["failed load is not an empty claim"]
+    }
+  ],
+  "evidence": {
+    "required": [
+      { "state": "orders-1440", "viewport": "1440x900", "shows": "two waiting orders among 200 completed" },
+      { "state": "orders-390", "viewport": "390x900", "shows": "same data on mobile" },
+      { "state": "orders-error-1440", "viewport": "1440x900", "shows": "API fails" },
+      { "state": "orders-empty-1440", "viewport": "1440x900", "shows": "really no orders" }
+    ]
+  },
+  "sources": ["src/pages/Orders.tsx"],
+  "knownGapRules": [],
+  "knownGaps": [],
+  "changeLog": []
+}

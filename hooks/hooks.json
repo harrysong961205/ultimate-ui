@@ -1,0 +1,11 @@
+{
+  "description": "ultimate-ui: run the design-token check on screen files right after Claude edits them. Does nothing in projects without ultimate-ui.config.json.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/uui.mjs\" hook" }]
+      }
+    ]
+  }
+}

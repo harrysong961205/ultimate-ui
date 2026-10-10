@@ -1,0 +1,17 @@
+{
+  "name": "ultimate-ui",
+  "owner": {
+    "name": "harrysong961205"
+  },
+  "plugins": [
+    {
+      "name": "ultimate-ui",
+      "source": "./",
+      "description": "Screen contracts, design-token enforcement and screenshot review for AI-built UI."
+    }
+  ],
+  "metadata": {
+    "description": "Ultimate UI \u2014 screen contracts, design-token enforcement and screenshot review so AI agents ship UI that holds up.",
+    "version": "0.1.0"
+  }
+}

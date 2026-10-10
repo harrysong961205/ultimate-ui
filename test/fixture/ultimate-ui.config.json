@@ -1,0 +1,1 @@
+{ "src": "src", "tokens": ["src/tokens.css"], "baseline": "design-baseline.json", "contracts": "docs/screen-contracts" }
